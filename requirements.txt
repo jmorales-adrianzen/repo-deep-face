@@ -1,0 +1,14 @@
+# DO NOT include azure-functions-worker in this file
+# The Python Worker is managed by Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+azure-functions==1.23.0
+tensorflow==2.19.0
+deepface==0.0.88
+tf_keras==2.19.0
+pillow==11.3.0
+langchain<1.0.0,>=0.3.25
+langchain==0.3.26 
+langchain-core==0.3.68
+langsmith<0.4,>=0.1.125
+opencv-python==4.11.0.86
