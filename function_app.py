@@ -92,67 +92,6 @@ def verifymetodo(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json"
         )
 
-
-@app.route(route="analyzemetodo")
-def analyzemetodo(req: func.HttpRequest) -> func.HttpResponse:
-    try:
-        # 1. Parsear el JSON de entrada
-        req_body = req.get_json()
-        logging.info("Solicitud recibida")
-        
-        img1_base64 = req_body.get("imagen")
-        actions=("age", "gender", "emotion", "race")
-
-        # 2. Validar entradas
-        if not img1_base64 or not actions:
-            logging.warning("Faltan imagen o acciones en la solicitud")
-            return func.HttpResponse(
-                json.dumps({"error": "Se requiere 'image1' o 'action' en Base64"}),
-                status_code=400,
-                mimetype="application/json"
-            )
-
-        # 3. Convertir imágenes
-        logging.info("Procesando imágenes...")
-        img1_array = base64_to_image(img1_base64)
-
-        # 4. Comparar rostros con DeepFace
-        logging.info(f"Comparando con modelo {actions}...")      
-        result = DeepFace.analyze(
-            img_path=img1_array,  # Pasamos el array directamente
-            actions=actions,
-            detector_backend="retinaface",
-            enforce_detection=False            
-        )        
-
-        logging.info("Análisis completado")
-        
-        # Mapeo directo de campos (sin cálculos intermedios)
-        response = format_raw_deepface_response(result)
-
-        #logging.info(f"Resultado: {response['verified']} (Distancia: {result['distance']:.4f})")
-        
-        return func.HttpResponse(
-            json.dumps(response),
-            status_code=200,
-            mimetype="application/json"
-        )
-    except ValueError as e:
-        logging.error(f"Error de validación: {str(e)}")
-        return func.HttpResponse(
-            json.dumps({"error": str(e)}),
-            status_code=400,
-            mimetype="application/json"
-        )
-    except Exception as e:
-        logging.error(f"Error interno: {str(e)}", exc_info=True)
-        return func.HttpResponse(
-            json.dumps({"error": "Error interno del servidor"}),
-            status_code=500,
-            mimetype="application/json"
-        )
-
-
         
 def base64_to_image(base64_str: str) -> np.ndarray:
     try:
