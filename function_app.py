@@ -9,6 +9,8 @@ import json
 import sys
 import os
 
+os.environ["DEEPFACE_HOME"] = "/tmp/.deepface"  # Fix para permisos
+
 # Asegura que el entorno vea los paquetes instalados en .python_packages
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.python_packages/lib/site-packages')))
 
