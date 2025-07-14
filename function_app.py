@@ -6,6 +6,11 @@ from deepface import DeepFace
 from io import BytesIO
 from PIL import Image
 import json
+import sys
+import os
+
+# Asegura que el entorno vea los paquetes instalados en .python_packages
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.python_packages/lib/site-packages')))
 
 # Configura logging
 logging.basicConfig(level=logging.INFO)
