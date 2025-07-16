@@ -1,6 +1,3 @@
-import os
-os.environ["DEEPFACE_HOME"] = "/tmp/.deepface"
-
 import azure.functions as func
 import logging
 import base64
@@ -9,35 +6,27 @@ from deepface import DeepFace
 from io import BytesIO
 from PIL import Image
 import json
-#import sys
-#import os
-
-#os.environ["DEEPFACE_HOME"] = "/tmp/.deepface"  # Fix para permisos
-
-# Asegura que el entorno vea los paquetes instalados en .python_packages
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.python_packages/lib/site-packages')))
 
 # Configura logging
 logging.basicConfig(level=logging.INFO)
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
-@app.route(route="verifymetodo")
-def verifymetodo(req: func.HttpRequest) -> func.HttpResponse:
+
+@app.route(route="analyze")
+def analyze(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # 1. Parsear el JSON de entrada
         req_body = req.get_json()
         logging.info("Solicitud recibida")
         
-        img1_base64 = req_body.get("image1")
-        img2_base64 = req_body.get("image2")
-        model_name = req_body.get("model", "VGG-Face")  # Default: VGG-Face
-        threshold = float(req_body.get("threshold", 0.4))  # Default: 0.4
+        img1_base64 = req_body.get("imagen")
+        actions=("age", "gender", "emotion", "race")
 
         # 2. Validar entradas
-        if not img1_base64 or not img2_base64:
-            logging.warning("Faltan imágenes en la solicitud")
+        if not img1_base64 or not actions:
+            logging.warning("Faltan imagen o acciones en la solicitud")
             return func.HttpResponse(
-                json.dumps({"error": "Se requieren 'image1' y 'image2' en Base64"}),
+                json.dumps({"error": "Se requiere 'image1' o 'action' en Base64"}),
                 status_code=400,
                 mimetype="application/json"
             )
@@ -45,37 +34,22 @@ def verifymetodo(req: func.HttpRequest) -> func.HttpResponse:
         # 3. Convertir imágenes
         logging.info("Procesando imágenes...")
         img1_array = base64_to_image(img1_base64)
-        img2_array = base64_to_image(img2_base64)
 
         # 4. Comparar rostros con DeepFace
-        logging.info(f"Comparando con modelo {model_name}...")
-        result = DeepFace.verify(
-            img1_path=img1_array,
-            img2_path=img2_array,
-            model_name=model_name,
-            distance_metric="cosine",
-            detector_backend="ssd",  # Más preciso que "ssd"
-            enforce_detection=False
-        )
+        logging.info(f"Comparando con modelo {actions}...")      
+        result = DeepFace.analyze(
+            img_path=img1_array,  # Pasamos el array directamente
+            actions=actions,
+            detector_backend="retinaface",
+            enforce_detection=False            
+        )        
 
-        # 5. Formatear respuesta
-        response = {
-            "verified": bool(result["distance"] <= threshold),
-            "confidence": float(1 - result["distance"]),
-            "metrics": {
-                "distance": float(result["distance"]),
-                "threshold": threshold,
-                "model": model_name,
-                "detector": "ssd",
-                "processing_time": result["time"]
-            },
-            "faces": {
-                "image1_detected": bool(result["facial_areas"]["img1"]),
-                "image2_detected": bool(result["facial_areas"]["img2"])
-            }
-        }
+        logging.info("Análisis completado")
+        
+        # Mapeo directo de campos (sin cálculos intermedios)
+        response = format_raw_deepface_response(result)
 
-        logging.info(f"Resultado: {response['verified']} (Distancia: {result['distance']:.4f})")
+        #logging.info(f"Resultado: {response['verified']} (Distancia: {result['distance']:.4f})")
         
         return func.HttpResponse(
             json.dumps(response),
