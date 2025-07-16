@@ -1,3 +1,6 @@
+import os
+os.environ["DEEPFACE_HOME"] = "/tmp/.deepface"
+
 import azure.functions as func
 import logging
 import base64
